@@ -16,7 +16,7 @@ end
 setmetatable(StaticSound, { __call = function(_, ...) return StaticSound.new(...) end })
 
 gameState = {
-	playerPosition = {x = 0, y = 0, z = 0},
+	playerPosition = {x = 20, y = 0, z = 20},
 	playerAngular = {x = 0, y = 0, z = 0}, -- angle
 	footstepSound = nil,
 
@@ -27,21 +27,26 @@ mouseSensibility = 0.005
 indicatorVisibleTime = 0.1
 indicatorFadeTime = 0.1
 
-levelWalls = {  {x = -50, y = 0, z = -50},
-			 	{x = -40, y = 0, z = -50},
-			 	{x = -30, y = 0, z = -50},
-			 	{x = -20, y = 0, z = -50},
-			 	{x = -10, y = 0, z = -50},
-			 	{x = 0, y = 0, z = -50},
-			 	{x = 10, y = 0, z = -50},
-			 	{x = 20, y = 0, z = -50},
-			 	{x = 30, y = 0, z = -50},
-			 	{x = 40, y = 0, z = -50},
-			 	{x = 50, y = 0, z = -50},
-			 	{x = 50, y = 0, z = 50},
-			 	{x = -50, y = 0, z = 50},
-			 	{x = -50, y = 0, z = -50}
-			 }
+wallInvVisibility = 28
+
+playerRadius = 1
+
+gameState.level = {
+	data = {
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
+		1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
+		1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1	
+		},
+		width = 10,
+		height = 10
+}
 
 function gameState:load()
 	table.insert(self.sounds, StaticSound("water_fall.wav", 40, 0, 0, 10, 10))
@@ -62,26 +67,53 @@ function gameState:update(dt)
 	local playerSideVector = {x = playerForward.z, y = 0, z = -playerForward.x}
 
 	local footstepVolume = 0
+	local ptx = math.floor(self.playerPosition.x / wallLength)
+	local pty = math.floor(self.playerPosition.z / wallLength)
+
+	local playerDisplacement = {x = 0; y = 0, z = 0}
 	if love.keyboard.isDown("z") then
-	   	self.playerPosition.x = self.playerPosition.x + playerForward.x * 8.0 * dt
-   		self.playerPosition.z = self.playerPosition.z + playerForward.z * 8.0 * dt 	
+	   	playerDisplacement.x = playerForward.x * 8.0 * dt
+   		playerDisplacement.z = playerForward.z * 8.0 * dt 	
    		footstepVolume = 1
 	elseif love.keyboard.isDown("s") then
-	   	self.playerPosition.x = self.playerPosition.x - playerForward.x * 8.0 * dt
-   		self.playerPosition.z = self.playerPosition.z - playerForward.z * 8.0 * dt 			
+	   	playerDisplacement.x = -playerForward.x * 8.0 * dt
+   		playerDisplacement.z = -playerForward.z * 8.0 * dt 			
    		footstepVolume = 1
 	end
 
 	if love.keyboard.isDown("q") then
-	   	self.playerPosition.x = self.playerPosition.x + playerSideVector.x * 8.0 * dt
-   		self.playerPosition.z = self.playerPosition.z + playerSideVector.z * 8.0 * dt 	
+	   	playerDisplacement.x = playerDisplacement.x + playerSideVector.x * 8.0 * dt
+   		playerDisplacement.z = playerDisplacement.z + playerSideVector.z * 8.0 * dt 	
   		footstepVolume = 1
 	elseif love.keyboard.isDown("d") then
-	   	self.playerPosition.x = self.playerPosition.x - playerSideVector.x * 8.0 * dt
-   		self.playerPosition.z = self.playerPosition.z - playerSideVector.z * 8.0 * dt 			
+	   	playerDisplacement.x = playerDisplacement.x - playerSideVector.x * 8.0 * dt
+   		playerDisplacement.z = playerDisplacement.z - playerSideVector.z * 8.0 * dt 			
   		footstepVolume = 1
 	end
 
+	-- clamp displacement
+	if playerDisplacement.x < 0 and self.level.data[(ptx - 1 + pty * self.level.width) + 1] == 1 then
+		playerDisplacement.x = math.max(playerDisplacement.x, ptx * wallLength - self.playerPosition.x + playerRadius)
+	end
+
+	if playerDisplacement.x > 0 and self.level.data[(ptx + 1 + pty * self.level.width) + 1] == 1 then
+		playerDisplacement.x = math.min(playerDisplacement.x, (ptx + 1) * wallLength - self.playerPosition.x - playerRadius)
+	end
+
+	if playerDisplacement.z < 0 and self.level.data[(ptx + (pty - 1) * self.level.width) + 1] == 1 then
+		playerDisplacement.z = math.max(playerDisplacement.z, pty * wallLength - self.playerPosition.z + playerRadius)
+	end
+
+	if playerDisplacement.z > 0 and self.level.data[(ptx + (pty + 1) * self.level.width) + 1] == 1 then
+		playerDisplacement.z = math.min(playerDisplacement.z, (pty + 1) * wallLength - self.playerPosition.z - playerRadius)
+	end
+
+
+	-- update position
+	self.playerPosition.x = self.playerPosition.x + playerDisplacement.x
+	self.playerPosition.z = self.playerPosition.z + playerDisplacement.z
+
+	-- update foot steps volume
 	self.footstepSound.source:setVolume(footstepVolume)
 
 	-- update audio listener position
@@ -143,6 +175,104 @@ function projectPoint(p, zoom)
 	return projectedPoint
 end
 
+function gameState:drawWall(x1, z1, x2, z2)
+	local winW, winH = love.window.getDimensions()
+
+	local p1 = self:transformPoint({x = x1, y = 0, z = z1})
+	local p2 = self:transformPoint({x = x2, y = 0, z = z2})
+
+	-- clamped point
+	local _p1 = p1
+	local _p2 = p2
+
+	if p1.z < 0 and p2.z < 0 then
+		_p1 = p1
+		_p2 = p2
+
+		--love.graphics.setColor(255, 255, 255, 255)
+	end
+
+	if p1.z < 0 and p2.z > 0 then
+		local l =  (-p1.z * 0.999) / (-p1.z + p2.z)
+		local clampedPoint = {}
+		clampedPoint.x = l * (p2.x - p1.x) + p1.x
+		clampedPoint.z = l * (p2.z - p1.z) + p1.z
+
+		_p1 = p1
+		_p2 = clampedPoint
+
+	--love.graphics.setColor(255, 0, 0, 255)
+	end
+
+	if p1.z > 0 and p2.z < 0 then
+		local l =  (-p2.z * 0.999) / (-p2.z + p1.z)
+		local clampedPoint = {}
+
+		clampedPoint.x = l * (p1.x - p2.x) + p2.x
+		clampedPoint.z = l * (p1.z - p2.z) + p2.z
+
+		_p1 = clampedPoint
+		_p2 = p2
+
+		--love.graphics.setColor(0, 0, 255, 255)
+	end
+
+	-- draw if visible
+	if not (p1.z >= 0 and p2.z >= 0) then
+		-- project points
+		local A = projectPoint({x = _p1.x, y = -5, z = _p1.z}, winW / 2)
+		local B = projectPoint({x = _p1.x, y = 5, z = _p1.z}, winW / 2)
+		local C = projectPoint({x = _p2.x, y = -5, z = _p2.z}, winW / 2)
+		local D = projectPoint({x = _p2.x, y = 5, z = _p2.z}, winW / 2)
+
+		--love.graphics.polygon('line', A.x, A.y, C.x, C.y, D.x, D.y, B.x, B.y)
+
+		local mesh = love.graphics.newMesh({ { A.x, A.y, 0, 0, 255, 255, 255, math.max(255 - A.z * wallInvVisibility, 0)},
+											 { C.x, C.y, 1, 0, 255, 255, 255, math.max(255 - C.z * wallInvVisibility, 0)},
+											 { D.x, D.y, 1, 1, 255, 255, 255, math.max(255 - D.z * wallInvVisibility, 0)},
+											 { B.x, B.y, 0, 1, 255, 255, 255, math.max(255 - B.z * wallInvVisibility, 0)}}, nil)
+		love.graphics.draw(mesh)
+	end
+end
+
+wallLength = 10
+function gameState:drawBlock(x, y)
+	-- max 4 wall to draw
+	--[[
+	*----- 3 -----*
+	|             |
+	|             |
+	1             2
+	|             |
+	|             |
+	*----- 4 -----*
+	]]
+
+	-- nothing to draw
+	if self.level.data[(x + y * self.level.width) + 1] == 0 then
+		return
+	end
+
+	-- else block == 1
+	if x > 0 and self.level.data[(x - 1 + y * self.level.width) + 1] == 0 and self.playerPosition.x <= x * wallLength then
+		self:drawWall(x * wallLength, y * wallLength, x * wallLength, (y + 1) * wallLength)
+	end
+
+	if x < self.level.width - 1 and self.level.data[(x + 1 + y * self.level.width) + 1] == 0 and self.playerPosition.x >= (x + 1) * wallLength then
+		self:drawWall((x + 1) * wallLength, y * wallLength, (x + 1) * wallLength, (y + 1) * wallLength)
+	end
+
+	if y > 0 and self.level.data[(x + (y - 1) * self.level.width) + 1] == 0 and self.playerPosition.z <= y * wallLength then
+		self:drawWall(x * wallLength, y * wallLength, (x + 1) * wallLength, y * wallLength)
+	end
+
+	if y < self.level.height - 1 and self.level.data[(x + (y + 1) * self.level.width) + 1] == 0 and self.playerPosition.z >= (y + 1) * wallLength then
+		self:drawWall(x * wallLength, (y + 1) * wallLength, (x + 1) * wallLength, (y + 1) * wallLength)
+	end
+
+
+end
+
 function gameState:draw()
 	love.graphics.setColor(255, 255, 255, 255)
 	local winW, winH = love.window.getDimensions()
@@ -150,30 +280,30 @@ function gameState:draw()
 	-- map debug draw
 	if true then
 		love.graphics.push()
-		love.graphics.translate(winW / 2, winH / 2)
+		love.graphics.translate(winW - 128, winH - 128)
 
 		-- player
 		local playerPos = self:transformPoint(self.playerPosition)
 		love.graphics.point(playerPos.x, playerPos.z)
 		love.graphics.line(playerPos.x, playerPos.z, playerPos.x, playerPos.z - 15)
 
+		love.graphics.push()
+		love.graphics.rotate(-self.playerAngular.y)
+		love.graphics.translate(-self.playerPosition.x, -self.playerPosition.z)
 		-- objects
 		for k, v in pairs(self.sounds) do
-			local p = self:transformPoint(v.position)
-			love.graphics.point(p.x, p.z)
+			love.graphics.point(v.position.x, v.position.z)
 		end
 
-		-- walls
-		local prevPoint = nil
-		for k, v in pairs(levelWalls) do
-			local p = self:transformPoint(v)
-
-			if not (prevPoint == nil) then
-				love.graphics.line(prevPoint.x, prevPoint.z, p.x, p.z)
+		-- map
+		for y = 0, self.level.height - 1 do
+			for x = 0, self.level.width - 1 do
+				if self.level.data[x + y * self.level.width + 1] == 1 then
+					love.graphics.polygon("fill", x * wallLength, y * wallLength, (x+1) * wallLength, y * wallLength, (x+1) * wallLength, (y+1) * wallLength, x * wallLength, (y+1) * wallLength)
+				end
 			end
-
-			prevPoint = p
 		end
+		love.graphics.pop()
 
 
 		love.graphics.pop()
@@ -183,69 +313,10 @@ function gameState:draw()
 	love.graphics.push()
 	love.graphics.translate(winW / 2, winH / 2)
 
-	local prevPoint = nil
-	for k, v in pairs(levelWalls) do
-		-- y = 0, because it's just 2D point on x/z plane
-		local currentPoint = self:transformPoint(v)
-
-		local p1 = nil
-		local p2 = nil
-
-		--love.graphics.line(x, y1, x, y2)
-		if not (prevPoint == nil)  then
-			if currentPoint.z < 0 and prevPoint.z < 0 then
-				p1 = currentPoint
-				p2 = prevPoint
-
-				--love.graphics.setColor(255, 255, 255, 255)
-			end
-
-			if currentPoint.z < 0 and prevPoint.z > 0 then
-				local l =  (-currentPoint.z * 0.999) / (-currentPoint.z + prevPoint.z)
-				local clampedPoint = {}
-				clampedPoint.x = l * (prevPoint.x - currentPoint.x) + currentPoint.x
-				clampedPoint.z = l * (prevPoint.z - currentPoint.z) + currentPoint.z
-
-				p1 = currentPoint
-				p2 = clampedPoint
-
-				--love.graphics.setColor(255, 0, 0, 255)
-			end
-
-			if currentPoint.z > 0 and prevPoint.z < 0 then
-				local l =  (-prevPoint.z * 0.999) / (-prevPoint.z + currentPoint.z)
-				local clampedPoint = {}
-
-				clampedPoint.x = l * (currentPoint.x - prevPoint.x) + prevPoint.x
-				clampedPoint.z = l * (currentPoint.z - prevPoint.z) + prevPoint.z
-
-				p1 = clampedPoint
-				p2 = prevPoint
-
-				--love.graphics.setColor(0, 0, 255, 255)
-			end
-
-			-- draw if visible
-			if not (currentPoint.z >= 0 and prevPoint.z >= 0) then
-				-- project points
-				local A = projectPoint({x = p1.x, y = -5, z = p1.z}, winW / 2)
-				local B = projectPoint({x = p1.x, y = 5, z = p1.z}, winW / 2)
-				local C = projectPoint({x = p2.x, y = -5, z = p2.z}, winW / 2)
-				local D = projectPoint({x = p2.x, y = 5, z = p2.z}, winW / 2)
-
-				--love.graphics.polygon('line', A.x, A.y, C.x, C.y, D.x, D.y, B.x, B.y)
-
-				local wallInvVisibility = 26
-				local mesh = love.graphics.newMesh({ { A.x, A.y, 0, 0, 255, 255, 255, math.max(255 - A.z * wallInvVisibility, 0)},
-													 { C.x, C.y, 1, 0, 255, 255, 255, math.max(255 - C.z * wallInvVisibility, 0)},
-													 { D.x, D.y, 1, 1, 255, 255, 255, math.max(255 - D.z * wallInvVisibility, 0)},
-													 { B.x, B.y, 0, 1, 255, 255, 255, math.max(255 - B.z * wallInvVisibility, 0)}}, nil)
-				love.graphics.draw(mesh)
-			end
+	for y = 0, self.level.height - 1 do
+		for x = 0, self.level.width - 1 do
+			self:drawBlock(x, y)
 		end
-		--end
-
-		prevPoint = currentPoint
 	end
 	love.graphics.pop()
 
