@@ -42,17 +42,17 @@ function gameState:load()
 end
 
 function gameState:update(dt)
-	local playerOrientation = {x = math.cos(self.playerAngular.y), y = 0, z = math.sin(self.playerAngular.y)}
-	local playerSideVector = {x = playerOrientation.z, y = 0, z = -playerOrientation.x}
+	local playerForward = {x = math.sin(self.playerAngular.y), y = 0, z = -math.cos(self.playerAngular.y)}
+	local playerSideVector = {x = playerForward.z, y = 0, z = -playerForward.x}
 
 	local footstepVolume = 0
 	if love.keyboard.isDown("z") then
-	   	self.playerPosition.x = self.playerPosition.x + playerOrientation.x * 8.0 * dt
-   		self.playerPosition.z = self.playerPosition.z + playerOrientation.z * 8.0 * dt 	
+	   	self.playerPosition.x = self.playerPosition.x + playerForward.x * 8.0 * dt
+   		self.playerPosition.z = self.playerPosition.z + playerForward.z * 8.0 * dt 	
    		footstepVolume = 1
 	elseif love.keyboard.isDown("s") then
-	   	self.playerPosition.x = self.playerPosition.x - playerOrientation.x * 8.0 * dt
-   		self.playerPosition.z = self.playerPosition.z - playerOrientation.z * 8.0 * dt 			
+	   	self.playerPosition.x = self.playerPosition.x - playerForward.x * 8.0 * dt
+   		self.playerPosition.z = self.playerPosition.z - playerForward.z * 8.0 * dt 			
    		footstepVolume = 1
 	end
 
@@ -70,7 +70,7 @@ function gameState:update(dt)
 
 	-- update audio listener position
 	love.audio.setPosition(self.playerPosition.x, self.playerPosition.y, self.playerPosition.z)
-	love.audio.setOrientation(playerOrientation.x, playerOrientation.y, playerOrientation.z, 0, 1, 0)
+	love.audio.setOrientation(playerForward.x, playerForward.y, playerForward.z, 0, 1, 0)
 
 	-- update indicator timer
 	self.indicatorTimer = self.indicatorTimer + dt
@@ -100,21 +100,37 @@ function gameState:mousemoved(x, y, dx, dy)
 	--print(dx, self.playerAngular.y)
 end
 
+function gameState:projectPoint(p)
+	local tx = p.x - self.playerPosition.x
+	local ty = p.y - self.playerPosition.y
+	local tz = p.z - self.playerPosition.z
+
+	-- rotate on y
+	rx = {x = math.cos(-self.playerAngular.y), y = 0, z = math.sin(-self.playerAngular.y)}
+	rz = {x = -math.sin(-self.playerAngular.y), y = 0, z = math.cos(-self.playerAngular.y)}
+
+	local x = rx.x * tx + rz.x * tz
+	local y = ty
+	local z = rx.z * tx + rz.z * tz
+
+	return x, y, z
+end
+
 function gameState:draw()
 	love.graphics.setColor(255, 255, 255, 255)
 
 	-- debug draw
 	if true then
 		love.graphics.push()
-		love.graphics.translate(100, 100)
+		love.graphics.translate(256, 256)
 
-		love.graphics.point(self.playerPosition.x, self.playerPosition.z)
-		local playerOrientation = {x = math.cos(self.playerAngular.y), y = 0, z = math.sin(self.playerAngular.y)}
-
-		love.graphics.line(self.playerPosition.x, self.playerPosition.z, self.playerPosition.x + playerOrientation.x * 15, self.playerPosition.z + playerOrientation.z * 15)
+		local px, py, pz = self:projectPoint(self.playerPosition)
+		love.graphics.point(px, pz)
+		love.graphics.line(px, pz, px, pz - 15)
 
 		for k, v in pairs(self.sounds) do
-			love.graphics.point(v.position.x, v.position.z)
+			x, y, z = self:projectPoint(v.position)
+			love.graphics.point(x, z)
 		end
 		love.graphics.pop()
 	end
@@ -133,7 +149,7 @@ end
 
 -- Love callback
 function love.load()
-	love.window.setMode(1280, 768, {})
+	love.window.setMode(1920, 1080, {fullscreen=true})
 
 	love.mouse.setGrabbed(true)
 	love.mouse.setRelativeMode(true)
