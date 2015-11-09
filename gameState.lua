@@ -1,5 +1,5 @@
 StaticSound = {}
-
+StaticSound.__index = StaticSound
 function StaticSound.new(filename, x, y, z, ref, max)
 	local self = setmetatable({}, StaticSound)
 
@@ -15,6 +15,103 @@ end
 
 setmetatable(StaticSound, { __call = function(_, ...) return StaticSound.new(...) end })
 
+Monster = {}
+Monster.__index = Monster
+function Monster.new()
+	local self = setmetatable({}, Monster)
+
+	self.timer = 0
+	self.sound = love.audio.newSource("monster.mp3", "static")
+	self.sound:setAttenuationDistances(3, 0)
+
+	self.attackSound = love.audio.newSource("attack.mp3", "static")
+	self.attackSound:setAttenuationDistances(3, 0)
+
+
+	self.state = 0 -- hidden state
+	self.hiddentTime = 0 --love.math.random(30, 60) -- generate a new wait time
+	self.position = {x = 0, y = 0, z = 0}
+
+	return self
+end
+
+monsterAppearTime = 5
+monsterAttackTime = 5
+
+function Monster:update(dt, gameState)
+	self.timer = self.timer + dt
+
+	if self.state == 0 then
+		if self.timer > self.hiddentTime then
+			--print("monster appear")
+			self.state = 1 --appear state
+			self.timer = 0
+
+			-- next to the player!
+			self.position.x = gameState.playerPosition.x
+			self.position.z = gameState.playerPosition.z
+			self.sound:setPosition(self.position.x, self.position.y, self.position.z)
+
+			-- appearing, play the sound
+			self.sound:play()
+		end
+	elseif self.state == 1 then
+		if self.timer > monsterAppearTime then
+			--print("monster attack")
+
+			self.timer = 0
+			self.state = 2 -- attack!
+		end
+
+	elseif self.state == 2 then
+		-- move to the player
+		local dx = gameState.playerPosition.x - self.position.x
+		local dz = gameState.playerPosition.z - self.position.z
+		local len = math.sqrt(dx * dx + dz * dz)
+
+		dx = dx / len
+		dz = dz / len
+
+		self.position.x = self.position.x + dx * math.min(12.0 * dt, len)
+		self.position.z = self.position.z + dz * math.min(12.0 * dt, len)
+
+		-- if close enough, attack
+		if len < 2 then
+			-- play attack sound
+			self.attackSound:play()
+			self.sound:stop()
+
+			-- switch to attack state
+			self.timer = 0
+			self.state = 3	
+		end
+
+		if self.timer > monsterAttackTime then
+			-- disappear
+			self.timer = 0
+			self.state = 0
+			self.hiddentTime = love.math.random(30, 60) -- generate a new wait time
+			self.sound:stop()
+		end
+	elseif self.state == 3 then -- Attacking
+		-- stick to the player
+		self.position.x = gameState.playerPosition.x
+		self.position.z = gameState.playerPosition.z
+
+		if self.timer > 3 then
+			self.timer = 0
+			self.state = 0
+			self.hiddentTime = love.math.random(30, 60) -- generate a new wait time
+			self.sound:stop()			
+			self.attackSound:stop()
+		end
+	end
+
+	self.sound:setPosition(self.position.x, self.position.y, self.position.z)
+end
+
+setmetatable(Monster, { __call = function(_, ...) return Monster.new(...) end })
+
 gameState = {
 	playerPosition = {x = 15, y = 0, z = 15},
 	playerAngular = {x = 0, y = 0, z = 0}, -- angle
@@ -23,7 +120,7 @@ gameState = {
 	sounds = {}
 }
 
-showDebugMap = false
+showDebugMap = true
 
 mouseSensibility = 0.005
 indicatorVisibleTime = 0.1
@@ -61,13 +158,14 @@ gameState.level = {
 }
 
 function gameState:load()
-	table.insert(self.sounds, StaticSound("water_fall.wav", 40, 0, 0, 5, 10))
 	--table.insert(self.sounds, StaticSound("engine.wav", 80, 0, 20, 5, 10))
 	--table.insert(self.sounds, StaticSound("siren.wav", 0, 0, 50, 5, 10))
 	--table.insert(self.sounds, StaticSound("water_fall.wav", 90, 0, 100, 5, 10))
 	--table.insert(self.sounds, StaticSound("monster.wav", 90, 0, 190, 15, 0))
-	table.insert(self.sounds, StaticSound("fireplace.wav", 110, 0, 60, 5, 0))
-	table.insert(self.sounds, StaticSound("door.wav", 50, 0, 10, 2, 0))
+
+	--table.insert(self.sounds, StaticSound("water_fall.wav", 40, 0, 0, 5, 10))
+	--table.insert(self.sounds, StaticSound("fireplace.wav", 110, 0, 60, 5, 0))
+	--table.insert(self.sounds, StaticSound("door.wav", 50, 0, 10, 2, 0))
 
 	self.footstepSound = StaticSound("footsteps_wood.wav", 0, 0, 0, 0, 0)
 	self.footstepSound.source:setVolume(0)
@@ -78,6 +176,8 @@ function gameState:load()
 
 	love.mouse.setGrabbed(true)
 	love.mouse.setRelativeMode(true)
+
+	self.monster = Monster()
 end
 
 function gameState:unload()
@@ -88,12 +188,16 @@ function gameState:unload()
 		v.source:stop()
 	end
 
+	self.monster.sound:stop()
 
 	love.mouse.setGrabbed(false)
 	love.mouse.setRelativeMode(false)
 end
 
 function gameState:update(dt)
+	-- update monster
+	self.monster:update(dt, self)
+
 	local playerForward = {x = math.sin(self.playerAngular.y), y = 0, z = -math.cos(self.playerAngular.y)}
 	local playerSideVector = {x = playerForward.z, y = 0, z = -playerForward.x}
 
@@ -350,11 +454,14 @@ function gameState:draw()
 		end
 
 		-- objects
-		love.graphics.setColor(255, 0, 0, 255)
+		love.graphics.setColor(0, 255, 0, 255)
 		for k, v in pairs(self.sounds) do
 			love.graphics.point(v.position.x + 0.5, v.position.z + 0.5)
 		end
 
+		-- monster
+		love.graphics.setColor(255, 0, 0, 255)
+		love.graphics.point(self.monster.position.x + 0.5, self.monster.position.z + 0.5)
 
 		love.graphics.pop()
 
@@ -382,6 +489,4 @@ function gameState:draw()
 
 	love.graphics.setColor(255, 255, 255, indicatorAlpha)
 	love.graphics.draw(self.indicator, 96 / screenScale, winH - 96 / screenScale, self.indicatorRotation, 1 / screenScale , 1 / screenScale, 64, 64)
-	print(winH)
-
 end
