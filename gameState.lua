@@ -80,6 +80,19 @@ function gameState:load()
 	love.mouse.setRelativeMode(true)
 end
 
+function gameState:unload()
+	-- stop every sound
+	self.footstepSound.source:stop()
+
+	for k, v in pairs(self.sounds) do
+		v.source:stop()
+	end
+
+
+	love.mouse.setGrabbed(false)
+	love.mouse.setRelativeMode(false)
+end
+
 function gameState:update(dt)
 	local playerForward = {x = math.sin(self.playerAngular.y), y = 0, z = -math.cos(self.playerAngular.y)}
 	local playerSideVector = {x = playerForward.z, y = 0, z = -playerForward.x}
@@ -168,6 +181,13 @@ end
 
 function gameState:mousepressed( x, y, button )
 end
+
+function gameState:keypressed(key)
+	if key == "escape" then
+		changeState(titleState)
+	end
+end
+
 
 -- transform a point in eye space
 function gameState:transformPoint(p)

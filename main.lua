@@ -21,6 +21,9 @@ function titleState:load()
 	self.startButtonPosition = { x = 131, y = 140 }
 end
 
+function titleState:unload()
+end
+
 function titleState:update(dt)
 end
 
@@ -50,15 +53,28 @@ end
 
 function titleState:mousepressed(x, y, button)
 	if button == "l" and testPointInQuad(x, y, self.startButtonPosition.x, self.startButtonPosition.y, 58, 20) then
-		gameState:load()
-		currentState = gameState
+		changeState(gameState)
 	end
 end
 
+function titleState:keypressed(key)
+	if key == "escape" then
+		love.event.quit()
+	end
+end
 
 -- Love callback
 local mainCanvas
-currentState = titleState
+currentState = nil
+
+function changeState(newState)
+	if currentState ~= nil then
+		currentState:unload()
+	end
+
+	currentState = newState
+	currentState:load()
+end
 
 function love.load()
 	love.window.setMode(320 * screenScale, 180 * screenScale, {fullscreen=false})
@@ -71,7 +87,7 @@ function love.load()
 	mainCanvas = love.graphics.newCanvas(320, 180)
 	mainCanvas:setFilter("nearest", "nearest")
 
-	currentState:load()
+	changeState(titleState)
 end
 
 function love.update(dt)
@@ -98,7 +114,5 @@ function love.mousepressed( x, y, button )
 end
 
 function love.keypressed(key)
-   if key == "escape" then
-      love.event.quit()
-   end
+	currentState:keypressed(key)
 end
