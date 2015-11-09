@@ -15,6 +15,11 @@ end
 
 setmetatable(StaticSound, { __call = function(_, ...) return StaticSound.new(...) end })
 
+monsterAppearTime = 5
+monsterAttackTime = 5
+monsterMinIdle = 30
+monsterMaxIdle = 60
+
 Monster = {}
 Monster.__index = Monster
 function Monster.new()
@@ -29,14 +34,11 @@ function Monster.new()
 
 
 	self.state = 0 -- hidden state
-	self.hiddentTime = 0 --love.math.random(30, 60) -- generate a new wait time
+	self.hiddentTime = love.math.random(monsterMinIdle, monsterMaxIdle) -- generate a new wait time
 	self.position = {x = 0, y = 0, z = 0}
 
 	return self
 end
-
-monsterAppearTime = 5
-monsterAttackTime = 5
 
 function Monster:update(dt, gameState)
 	self.timer = self.timer + dt
@@ -83,14 +85,17 @@ function Monster:update(dt, gameState)
 
 			-- switch to attack state
 			self.timer = 0
-			self.state = 3	
+			self.state = 3
+
+			-- decrease healt
+			gameState.health = gameState.health - 1	
 		end
 
 		if self.timer > monsterAttackTime then
 			-- disappear
 			self.timer = 0
 			self.state = 0
-			self.hiddentTime = love.math.random(30, 60) -- generate a new wait time
+			self.hiddentTime = love.math.random(monsterMinIdle, monsterMaxIdle) -- generate a new wait time
 			self.sound:stop()
 		end
 	elseif self.state == 3 then -- Attacking
@@ -101,7 +106,7 @@ function Monster:update(dt, gameState)
 		if self.timer > 3 then
 			self.timer = 0
 			self.state = 0
-			self.hiddentTime = love.math.random(30, 60) -- generate a new wait time
+			self.hiddentTime = love.math.random(monsterMinIdle, monsterMaxIdle) -- generate a new wait time
 			self.sound:stop()			
 			self.attackSound:stop()
 		end
@@ -142,8 +147,8 @@ gameState.level = {
 		1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -159,13 +164,13 @@ gameState.level = {
 
 function gameState:load()
 	--table.insert(self.sounds, StaticSound("engine.wav", 80, 0, 20, 5, 10))
-	--table.insert(self.sounds, StaticSound("siren.wav", 0, 0, 50, 5, 10))
 	--table.insert(self.sounds, StaticSound("water_fall.wav", 90, 0, 100, 5, 10))
 	--table.insert(self.sounds, StaticSound("monster.wav", 90, 0, 190, 15, 0))
 
-	--table.insert(self.sounds, StaticSound("water_fall.wav", 40, 0, 0, 5, 10))
-	--table.insert(self.sounds, StaticSound("fireplace.wav", 110, 0, 60, 5, 0))
-	--table.insert(self.sounds, StaticSound("door.wav", 50, 0, 10, 2, 0))
+	table.insert(self.sounds, StaticSound("water_fall.wav", 40, 0, 0, 5, 10))
+	table.insert(self.sounds, StaticSound("fireplace.wav", 110, 0, 60, 5, 0))
+	table.insert(self.sounds, StaticSound("door.wav", 50, 0, 10, 2, 0))
+	table.insert(self.sounds, StaticSound("siren.wav", 185, 0, 115, 5, 10))
 
 	self.footstepSound = StaticSound("footsteps_wood.wav", 0, 0, 0, 0, 0)
 	self.footstepSound.source:setVolume(0)
@@ -178,6 +183,8 @@ function gameState:load()
 	love.mouse.setRelativeMode(true)
 
 	self.monster = Monster()
+
+	self.health = 5
 end
 
 function gameState:unload()
@@ -198,13 +205,22 @@ function gameState:update(dt)
 	-- update monster
 	self.monster:update(dt, self)
 
+	-- the end?
+	if self.health == 0 then
+		changeState(titleState)
+	end
+
+	local ptx = math.floor(self.playerPosition.x / wallLength)
+	local pty = math.floor(self.playerPosition.z / wallLength)
+
+	if ptx == 18 and pty == 11 then
+		changeState(titleState)
+	end
+
 	local playerForward = {x = math.sin(self.playerAngular.y), y = 0, z = -math.cos(self.playerAngular.y)}
 	local playerSideVector = {x = playerForward.z, y = 0, z = -playerForward.x}
 
 	local footstepVolume = 0
-	local ptx = math.floor(self.playerPosition.x / wallLength)
-	local pty = math.floor(self.playerPosition.z / wallLength)
-
 	local playerDisplacement = {x = 0; y = 0, z = 0}
 	if love.keyboard.isDown("z") then
 	   	playerDisplacement.x = playerForward.x * 8.0 * dt
