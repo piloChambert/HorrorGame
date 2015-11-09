@@ -16,43 +16,58 @@ end
 setmetatable(StaticSound, { __call = function(_, ...) return StaticSound.new(...) end })
 
 gameState = {
-	playerPosition = {x = 20, y = 0, z = 20},
+	playerPosition = {x = 15, y = 0, z = 15},
 	playerAngular = {x = 0, y = 0, z = 0}, -- angle
 	footstepSound = nil,
 
 	sounds = {}
 }
 
+showDebugMap = false
+
 mouseSensibility = 0.005
 indicatorVisibleTime = 0.1
 indicatorFadeTime = 0.1
 
-wallInvVisibility = 28
+wallInvVisibility = 22
 
 playerRadius = 1
 
 gameState.level = {
 	data = {
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
-		1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
-		1, 0, 0, 0, 0, 1, 1, 1, 0, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1	
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 0, 0, 1, 0, 2, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 		},
-		width = 10,
-		height = 10
+		width = 20,
+		height = 20
 }
 
 function gameState:load()
-	table.insert(self.sounds, StaticSound("water_fall.wav", 40, 0, 0, 10, 10))
-	table.insert(self.sounds, StaticSound("engine.wav", 80, 0, 20, 5, 10))
-	table.insert(self.sounds, StaticSound("siren.wav", 0, 0, 50, 5, 10))
-	table.insert(self.sounds, StaticSound("water_fall.wav", 90, 0, 100, 10, 10))
+	table.insert(self.sounds, StaticSound("water_fall.wav", 40, 0, 0, 5, 10))
+	--table.insert(self.sounds, StaticSound("engine.wav", 80, 0, 20, 5, 10))
+	--table.insert(self.sounds, StaticSound("siren.wav", 0, 0, 50, 5, 10))
+	--table.insert(self.sounds, StaticSound("water_fall.wav", 90, 0, 100, 5, 10))
+	--table.insert(self.sounds, StaticSound("monster.wav", 90, 0, 190, 15, 0))
+	table.insert(self.sounds, StaticSound("fireplace.wav", 110, 0, 60, 5, 0))
+	table.insert(self.sounds, StaticSound("door.wav", 50, 0, 10, 2, 0))
 
 	self.footstepSound = StaticSound("footsteps_wood.wav", 0, 0, 0, 0, 0)
 	self.footstepSound.source:setVolume(0)
@@ -92,19 +107,19 @@ function gameState:update(dt)
 	end
 
 	-- clamp displacement
-	if playerDisplacement.x < 0 and self.level.data[(ptx - 1 + pty * self.level.width) + 1] == 1 then
+	if playerDisplacement.x < 0 and self.level.data[(ptx - 1 + pty * self.level.width) + 1] ~= 0 then
 		playerDisplacement.x = math.max(playerDisplacement.x, ptx * wallLength - self.playerPosition.x + playerRadius)
 	end
 
-	if playerDisplacement.x > 0 and self.level.data[(ptx + 1 + pty * self.level.width) + 1] == 1 then
+	if playerDisplacement.x > 0 and self.level.data[(ptx + 1 + pty * self.level.width) + 1] ~= 0 then
 		playerDisplacement.x = math.min(playerDisplacement.x, (ptx + 1) * wallLength - self.playerPosition.x - playerRadius)
 	end
 
-	if playerDisplacement.z < 0 and self.level.data[(ptx + (pty - 1) * self.level.width) + 1] == 1 then
+	if playerDisplacement.z < 0 and self.level.data[(ptx + (pty - 1) * self.level.width) + 1] ~= 0 then
 		playerDisplacement.z = math.max(playerDisplacement.z, pty * wallLength - self.playerPosition.z + playerRadius)
 	end
 
-	if playerDisplacement.z > 0 and self.level.data[(ptx + (pty + 1) * self.level.width) + 1] == 1 then
+	if playerDisplacement.z > 0 and self.level.data[(ptx + (pty + 1) * self.level.width) + 1] ~= 0 then
 		playerDisplacement.z = math.min(playerDisplacement.z, (pty + 1) * wallLength - self.playerPosition.z - playerRadius)
 	end
 
@@ -175,8 +190,10 @@ function projectPoint(p, zoom)
 	return projectedPoint
 end
 
-function gameState:drawWall(x1, z1, x2, z2)
-	local winW, winH = love.window.getDimensions()
+function gameState:drawWall(x1, z1, x2, z2, min, max)
+	--local winW, winH = love.window.getDimensions()
+	local winW, winH = love.graphics.getCanvas():getDimensions()
+
 
 	local p1 = self:transformPoint({x = x1, y = 0, z = z1})
 	local p2 = self:transformPoint({x = x2, y = 0, z = z2})
@@ -220,10 +237,10 @@ function gameState:drawWall(x1, z1, x2, z2)
 	-- draw if visible
 	if not (p1.z >= 0 and p2.z >= 0) then
 		-- project points
-		local A = projectPoint({x = _p1.x, y = -5, z = _p1.z}, winW / 2)
-		local B = projectPoint({x = _p1.x, y = 5, z = _p1.z}, winW / 2)
-		local C = projectPoint({x = _p2.x, y = -5, z = _p2.z}, winW / 2)
-		local D = projectPoint({x = _p2.x, y = 5, z = _p2.z}, winW / 2)
+		local A = projectPoint({x = _p1.x, y = min, z = _p1.z}, winW / 2)
+		local B = projectPoint({x = _p1.x, y = max, z = _p1.z}, winW / 2)
+		local C = projectPoint({x = _p2.x, y = min, z = _p2.z}, winW / 2)
+		local D = projectPoint({x = _p2.x, y = max, z = _p2.z}, winW / 2)
 
 		--love.graphics.polygon('line', A.x, A.y, C.x, C.y, D.x, D.y, B.x, B.y)
 
@@ -253,21 +270,28 @@ function gameState:drawBlock(x, y)
 		return
 	end
 
+	local min = -5
+	local max = 5
+
+	if self.level.data[(x + y * self.level.width) + 1] == 2 then
+		min = 0
+	end
+
 	-- else block == 1
 	if x > 0 and self.level.data[(x - 1 + y * self.level.width) + 1] == 0 and self.playerPosition.x <= x * wallLength then
-		self:drawWall(x * wallLength, y * wallLength, x * wallLength, (y + 1) * wallLength)
+		self:drawWall(x * wallLength, y * wallLength, x * wallLength, (y + 1) * wallLength, min, max)
 	end
 
 	if x < self.level.width - 1 and self.level.data[(x + 1 + y * self.level.width) + 1] == 0 and self.playerPosition.x >= (x + 1) * wallLength then
-		self:drawWall((x + 1) * wallLength, y * wallLength, (x + 1) * wallLength, (y + 1) * wallLength)
+		self:drawWall((x + 1) * wallLength, y * wallLength, (x + 1) * wallLength, (y + 1) * wallLength, min, max)
 	end
 
 	if y > 0 and self.level.data[(x + (y - 1) * self.level.width) + 1] == 0 and self.playerPosition.z <= y * wallLength then
-		self:drawWall(x * wallLength, y * wallLength, (x + 1) * wallLength, y * wallLength)
+		self:drawWall(x * wallLength, y * wallLength, (x + 1) * wallLength, y * wallLength, min, max)
 	end
 
 	if y < self.level.height - 1 and self.level.data[(x + (y + 1) * self.level.width) + 1] == 0 and self.playerPosition.z >= (y + 1) * wallLength then
-		self:drawWall(x * wallLength, (y + 1) * wallLength, (x + 1) * wallLength, (y + 1) * wallLength)
+		self:drawWall(x * wallLength, (y + 1) * wallLength, (x + 1) * wallLength, (y + 1) * wallLength, min, max)
 	end
 
 
@@ -275,10 +299,11 @@ end
 
 function gameState:draw()
 	love.graphics.setColor(255, 255, 255, 255)
-	local winW, winH = love.window.getDimensions()
+	--local winW, winH = love.window.getDimensions()
+	local winW, winH = love.graphics.getCanvas():getDimensions()
 
 	-- map debug draw
-	if true then
+	if showDebugMap then
 		love.graphics.push()
 		love.graphics.translate(winW - 128, winH - 128)
 
@@ -290,10 +315,6 @@ function gameState:draw()
 		love.graphics.push()
 		love.graphics.rotate(-self.playerAngular.y)
 		love.graphics.translate(-self.playerPosition.x, -self.playerPosition.z)
-		-- objects
-		for k, v in pairs(self.sounds) do
-			love.graphics.point(v.position.x, v.position.z)
-		end
 
 		-- map
 		for y = 0, self.level.height - 1 do
@@ -303,6 +324,14 @@ function gameState:draw()
 				end
 			end
 		end
+
+		-- objects
+		love.graphics.setColor(255, 0, 0, 255)
+		for k, v in pairs(self.sounds) do
+			love.graphics.point(v.position.x + 0.5, v.position.z + 0.5)
+		end
+
+
 		love.graphics.pop()
 
 
@@ -328,11 +357,13 @@ function gameState:draw()
 	end
 
 	love.graphics.setColor(255, 255, 255, indicatorAlpha)
-	love.graphics.draw(self.indicator, 96, winH - 96, self.indicatorRotation, 1, 1, 64, 64)
+	love.graphics.draw(self.indicator, 96 / 4, winH - 96 / 4, self.indicatorRotation, 0.25, 0.25, 64, 64)
 
 end
 
 -- Love callback
+local mainCanvas
+
 function love.load()
 	love.window.setMode(1920, 1080, {fullscreen=true})
 
@@ -340,6 +371,8 @@ function love.load()
 	love.mouse.setRelativeMode(true)
 
 	love.audio.setDistanceModel("exponent")
+
+	mainCanvas = love.graphics.newCanvas(1920 / 4, 1080 / 4)
 
 	gameState:load()
 end
@@ -349,7 +382,14 @@ function love.update(dt)
 end
 
 function love.draw()
+	love.graphics.setCanvas(mainCanvas)
+	mainCanvas:clear()
+
     gameState:draw()
+
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.setCanvas()
+	love.graphics.draw(mainCanvas, 0, 0, 0, 4, 4)
 end
 
 function love.mousemoved(x, y, dx, dy)
