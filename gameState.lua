@@ -17,8 +17,8 @@ setmetatable(StaticSound, { __call = function(_, ...) return StaticSound.new(...
 
 monsterAppearTime = 5
 monsterAttackTime = 5
-monsterMinIdle = 30
-monsterMaxIdle = 60
+monsterMinIdle = 20
+monsterMaxIdle = 45
 
 Monster = {}
 Monster.__index = Monster
@@ -207,14 +207,14 @@ function gameState:update(dt)
 
 	-- the end?
 	if self.health == 0 then
-		changeState(titleState)
+		changeState(gameoverState)
 	end
 
 	local ptx = math.floor(self.playerPosition.x / wallLength)
 	local pty = math.floor(self.playerPosition.z / wallLength)
 
 	if ptx == 18 and pty == 11 then
-		changeState(titleState)
+		changeState(endState)
 	end
 
 	local playerForward = {x = math.sin(self.playerAngular.y), y = 0, z = -math.cos(self.playerAngular.y)}
