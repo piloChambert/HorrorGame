@@ -72,6 +72,7 @@ function State.new()
 end
 
 function State:load()
+	self.elements = {}
 end
 
 function State:unload()

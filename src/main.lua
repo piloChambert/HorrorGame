@@ -8,6 +8,8 @@ azerty = false
 
 titleState = State()
 function titleState:load()
+	State.load(self)
+
 	self.backgroundImage = love.graphics.newImage("titleBackground.png")
 
 	self.startButton = UIElement(213, 135, love.graphics.newImage("startOff.png"), love.graphics.newImage("startOn.png"), nil, self, self.startCallback)
@@ -33,19 +35,31 @@ end
 
 optionState = State()
 function optionState:load()
+	State.load(self)
+
 	self.backgroundImage = love.graphics.newImage("optionsBackground.png")
 
-	self.fullscreenCheck = UIElement(160, 61, love.graphics.newImage("checkOff.png"), nil, love.graphics.newImage("checkOn.png"), self, self.checkCallback)
+	self.fullscreenCheck = UIElement(160, 61, love.graphics.newImage("checkOff.png"), nil, love.graphics.newImage("checkOn.png"), self, self.fullscreenCallback)
+	self.azertyCheck = UIElement(160, 40, love.graphics.newImage("checkOff.png"), nil, love.graphics.newImage("checkOn.png"), self, self.azertyCallback)
+	self.azertyCheck.active = azerty
+
 	self.plusButton = UIElement(238, 82, love.graphics.newImage("plusButtonOff.png"), nil, love.graphics.newImage("plusButtonOn.png"), self, self.resolutionCallback)
 	self.minusButton = UIElement(160, 82, love.graphics.newImage("minusButtonOff.png"), nil, love.graphics.newImage("plusButtonOff.png"), self, self.resolutionCallback)
 
 	table.insert(self.elements, self.fullscreenCheck)
+	table.insert(self.elements, self.azertyCheck)
 	table.insert(self.elements, self.plusButton)
 	table.insert(self.elements, self.minusButton)
 end
 
-function optionState:checkCallback(sender)
+function optionState:fullscreenCallback(sender)
 	self.fullscreenCheck.active = not self.fullscreenCheck.active
+end
+
+function optionState:azertyCallback(sender)
+	self.azertyCheck.active = not self.azertyCheck.active
+
+	azerty = self.azertyCheck.active
 end
 
 function optionState:resolutionCallback(sender)
@@ -59,6 +73,8 @@ end
 
 introState = State()
 function introState:load()
+	State.load(self)
+
 	self.backgroundImage = love.graphics.newImage("intro.png")
 end
 
@@ -75,6 +91,8 @@ end
 
 gameoverState = State()
 function gameoverState:load()
+	State.load(self)
+
 	self.backgroundImage = love.graphics.newImage("gameover.png")
 end
 
@@ -88,6 +106,8 @@ end
 
 endState = State()
 function endState:load()
+	State.load(self)
+	
 	self.backgroundImage = love.graphics.newImage("endscreen.png")
 end
 
