@@ -222,21 +222,31 @@ function gameState:update(dt)
 
 	local footstepVolume = 0
 	local playerDisplacement = {x = 0; y = 0, z = 0}
-	if love.keyboard.isDown("z") then
+
+	local fwdKey = "w"
+	local backKey = "s"
+	local leftKey = "a"
+	local rightKey = "d"
+	if azerty then 
+		fwdKey = "z" 
+		leftKey = "q"
+	end
+
+	if love.keyboard.isDown(fwdKey) then
 	   	playerDisplacement.x = playerForward.x * 8.0 * dt
    		playerDisplacement.z = playerForward.z * 8.0 * dt 	
    		footstepVolume = 1
-	elseif love.keyboard.isDown("s") then
+	elseif love.keyboard.isDown(backKey) then
 	   	playerDisplacement.x = -playerForward.x * 8.0 * dt
    		playerDisplacement.z = -playerForward.z * 8.0 * dt 			
    		footstepVolume = 1
 	end
 
-	if love.keyboard.isDown("q") then
+	if love.keyboard.isDown(leftKey) then
 	   	playerDisplacement.x = playerDisplacement.x + playerSideVector.x * 8.0 * dt
    		playerDisplacement.z = playerDisplacement.z + playerSideVector.z * 8.0 * dt 	
   		footstepVolume = 1
-	elseif love.keyboard.isDown("d") then
+	elseif love.keyboard.isDown(rightKey) then
 	   	playerDisplacement.x = playerDisplacement.x - playerSideVector.x * 8.0 * dt
    		playerDisplacement.z = playerDisplacement.z - playerSideVector.z * 8.0 * dt 			
   		footstepVolume = 1

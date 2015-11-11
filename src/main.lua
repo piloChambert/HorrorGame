@@ -4,7 +4,7 @@ require "gameState"
 canvasResolution = {w = 320, h = 180}
 screenScale = 3
 fullscreen = false
-
+azerty = false
 
 titleState = State()
 function titleState:load()
@@ -22,7 +22,7 @@ function titleState:startCallback(sender)
 end
 
 function titleState:optionsCallback(sender)
-	changeState(optionState)
+	pushState(optionState)
 end
 
 function titleState:keypressed(key)
@@ -53,7 +53,7 @@ end
 
 function optionState:keypressed(key)
 	if key == "escape" then
-		changeState(titleState)
+		popState()
 	end
 end
 
@@ -102,7 +102,7 @@ end
 
 -- Love callback
 local mainCanvas
-currentState = nil
+states = {}
 
 function setupScreen() 
 	love.window.setMode(canvasResolution.w * screenScale, canvasResolution.h * screenScale, {fullscreen=fullscreen})
@@ -111,12 +111,26 @@ function setupScreen()
 end
 
 function changeState(newState)
-	if currentState ~= nil then
-		currentState:unload()
+	if #states > 0 then
+		states[#states]:unload()
 	end
 
-	currentState = newState
-	currentState:load()
+	table.remove(states)
+	table.insert(states, newState)
+	states[#states]:load()
+end
+
+function pushState(newState)
+	table.insert(states, newState)
+	states[#states]:load()	
+end
+
+function popState()
+	if #states > 0 then
+		states[#states]:unload()
+	end
+
+	table.remove(states)	
 end
 
 function love.load()
@@ -128,14 +142,14 @@ function love.load()
 end
 
 function love.update(dt)
-	currentState:update(dt)
+	states[#states]:update(dt)
 end
 
 function love.draw()
 	love.graphics.setCanvas(mainCanvas)
 	mainCanvas:clear()
 
-    currentState:draw()
+    states[#states]:draw()
 
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.setCanvas()
@@ -143,13 +157,22 @@ function love.draw()
 end
 
 function love.mousemoved(x, y, dx, dy)
-	currentState:mousemoved(x / screenScale, y / screenScale, dx, dy)
+	states[#states]:mousemoved(x / screenScale, y / screenScale, dx, dy)
 end
 
 function love.mousepressed( x, y, button )
-	currentState:mousepressed(x / screenScale, y / screenScale, button)
+	states[#states]:mousepressed(x / screenScale, y / screenScale, button)
 end
 
 function love.keypressed(key)
-	currentState:keypressed(key)
+	-- key translation!
+	local tkey = key
+	if azerty then 
+		if tkey == "a" then tkey = "q" end
+		if tkey == "z" then tkey = "w" end
+		if tkey == "q" then tkey = "a" end
+		if tkey == "w" then tkey = "z" end
+	end
+
+	states[#states]:keypressed(tkey)
 end
