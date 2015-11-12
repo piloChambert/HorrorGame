@@ -123,7 +123,14 @@ mouseSensibility = 0.005
 indicatorVisibleTime = 0.1
 indicatorFadeTime = 0.1
 
-wallInvVisibility = 22
+wallInvVisibilityIdle = 18
+wallInvVisibilityWalk = 24
+wallInvVisibilityRun = 64
+wallInvVisibilityChangeRateUp = 100 -- per seconds
+wallInvVisibilityChangeRateDown = 130 -- per seconds
+wallInvVisibility = 12
+
+wallWireframe = false
 
 playerRadius = 1
 
@@ -131,7 +138,6 @@ gameState = State()
 function gameState:load()
 	self.playerPosition = {x = 15, y = 0, z = 15}
 	self.playerAngular = {x = 0, y = 0, z = 0} -- angle
-	self.footstepSound = nil
 
 	self.sounds = {}
 
@@ -147,6 +153,10 @@ function gameState:load()
 
 	self.footstepSound = StaticSound("footsteps_wood.wav", 0, 0, 0, 0, 0)
 	self.footstepSound.source:setVolume(0)
+
+	self.footstepRunSound = StaticSound("footsteps_run_wood.wav", 0, 0, 0, 0, 0)
+	self.footstepRunSound.source:setVolume(0)
+
 
 	self.indicator = love.graphics.newImage("indicator.png")
 	self.indicatorRotation = 0
@@ -190,6 +200,7 @@ end
 function gameState:unload()
 	-- stop every sound
 	self.footstepSound.source:stop()
+	self.footstepRunSound.source:stop()
 
 	for k, v in pairs(self.sounds) do
 		v.source:stop()
@@ -232,24 +243,34 @@ function gameState:update(dt)
 		leftKey = "q"
 	end
 
+	local isMoving = false
+	local isRunning = false
+	local playerSpeed = 8.0
+
+	-- is player running?
+	if love.keyboard.isDown("lshift") then
+		isRunning = true
+		playerSpeed = 14.0
+	end
+
 	if love.keyboard.isDown(fwdKey) then
-	   	playerDisplacement.x = playerForward.x * 8.0 * dt
-   		playerDisplacement.z = playerForward.z * 8.0 * dt 	
-   		footstepVolume = 1
+	   	playerDisplacement.x = playerForward.x * playerSpeed * dt
+   		playerDisplacement.z = playerForward.z * playerSpeed * dt 	
+   		isMoving = true
 	elseif love.keyboard.isDown(backKey) then
-	   	playerDisplacement.x = -playerForward.x * 8.0 * dt
-   		playerDisplacement.z = -playerForward.z * 8.0 * dt 			
-   		footstepVolume = 1
+	   	playerDisplacement.x = -playerForward.x * playerSpeed * dt
+   		playerDisplacement.z = -playerForward.z * playerSpeed * dt 			
+   		isMoving = true
 	end
 
 	if love.keyboard.isDown(leftKey) then
-	   	playerDisplacement.x = playerDisplacement.x + playerSideVector.x * 8.0 * dt
-   		playerDisplacement.z = playerDisplacement.z + playerSideVector.z * 8.0 * dt 	
-  		footstepVolume = 1
+	   	playerDisplacement.x = playerDisplacement.x + playerSideVector.x * playerSpeed * dt
+   		playerDisplacement.z = playerDisplacement.z + playerSideVector.z * playerSpeed * dt 	
+  		isMoving = true
 	elseif love.keyboard.isDown(rightKey) then
-	   	playerDisplacement.x = playerDisplacement.x - playerSideVector.x * 8.0 * dt
-   		playerDisplacement.z = playerDisplacement.z - playerSideVector.z * 8.0 * dt 			
-  		footstepVolume = 1
+	   	playerDisplacement.x = playerDisplacement.x - playerSideVector.x * playerSpeed * dt
+   		playerDisplacement.z = playerDisplacement.z - playerSideVector.z * playerSpeed * dt 			
+  		isMoving = true
 	end
 
 	-- clamp displacement
@@ -275,12 +296,33 @@ function gameState:update(dt)
 	self.playerPosition.z = self.playerPosition.z + playerDisplacement.z
 
 	-- update foot steps volume
-	self.footstepSound.source:setVolume(footstepVolume)
+	local targetVisibility = wallInvVisibilityIdle
+	if isMoving then
+		if isRunning then
+			self.footstepSound.source:setVolume(0)
+			self.footstepRunSound.source:setVolume(1)
+			targetVisibility = wallInvVisibilityRun
+		else
+			self.footstepSound.source:setVolume(1)
+			self.footstepRunSound.source:setVolume(0)
+			targetVisibility = wallInvVisibilityWalk
+		end
+	else
+		-- idle
+		-- no footstep sound
+		self.footstepSound.source:setVolume(0)
+		self.footstepRunSound.source:setVolume(0)
+		targetVisibility = wallInvVisibilityIdle
+	end
 
 	-- update audio listener position
 	love.audio.setPosition(self.playerPosition.x, self.playerPosition.y, self.playerPosition.z)
 	love.audio.setOrientation(playerForward.x, playerForward.y, playerForward.z, 0, 1, 0)
 
+	-- update visibility
+	local change = math.max(math.min(targetVisibility - wallInvVisibility, wallInvVisibilityChangeRateDown * dt), -wallInvVisibilityChangeRateUp * dt)
+	wallInvVisibility = wallInvVisibility + change
+	
 	-- update indicator timer
 	self.indicatorTimer = self.indicatorTimer + dt
 end
@@ -394,12 +436,19 @@ function gameState:drawWall(x1, z1, x2, z2, min, max)
 		local C = projectPoint({x = _p2.x, y = min, z = _p2.z}, winW / 2)
 		local D = projectPoint({x = _p2.x, y = max, z = _p2.z}, winW / 2)
 
-		--love.graphics.polygon('line', A.x, A.y, C.x, C.y, D.x, D.y, B.x, B.y)
+		if wallWireframe then
+			love.graphics.polygon('line', A.x, A.y, C.x, C.y, D.x, D.y, B.x, B.y)
+		end
 
-		local mesh = love.graphics.newMesh({ { A.x, A.y, 0, 0, 255, 255, 255, math.max(255 - A.z * wallInvVisibility, 0)},
-											 { C.x, C.y, 1, 0, 255, 255, 255, math.max(255 - C.z * wallInvVisibility, 0)},
-											 { D.x, D.y, 1, 1, 255, 255, 255, math.max(255 - D.z * wallInvVisibility, 0)},
-											 { B.x, B.y, 0, 1, 255, 255, 255, math.max(255 - B.z * wallInvVisibility, 0)}}, nil)
+		local Ai = math.max(255 - A.z * wallInvVisibility, 0)
+		local Bi = math.max(255 - B.z * wallInvVisibility, 0)
+		local Ci = math.max(255 - C.z * wallInvVisibility, 0)
+		local Di = math.max(255 - D.z * wallInvVisibility, 0)
+
+		local mesh = love.graphics.newMesh({ { A.x, A.y, 0, 0, Ai, Ai, Ai, 255},
+											 { C.x, C.y, 1, 0, Ci, Ci, Ci, 255},
+											 { D.x, D.y, 1, 1, Di, Di, Di, 255},
+											 { B.x, B.y, 0, 1, Bi, Bi, Bi, 255}}, nil)
 		love.graphics.draw(mesh)
 	end
 end
@@ -449,6 +498,33 @@ function gameState:drawBlock(x, y)
 
 end
 
+function gameState.drawFloor()
+	local winW, winH = love.graphics.getCanvas():getDimensions()
+
+	local floorIntensity = 64
+
+	local mesh = love.graphics.newMesh({ 
+		-- floor
+		{ 0, winH * 0.75, 0, 0, 0, 0, 0, 255},
+		{ winW, winH * 0.75, 1, 0, 0, 0, 0, 255},
+		{ winW, winH, 1, 1, floorIntensity, floorIntensity, floorIntensity, 255},
+
+		{ 0, winH * 0.75, 0, 0, 0, 0, 0, 255},
+		{ winW, winH, 1, 1, floorIntensity, floorIntensity, floorIntensity, 255},		
+		{ 0, winH, 0, 1, floorIntensity, floorIntensity, floorIntensity, 255},
+
+		-- roof
+		{ 0, 0, 0, 0, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ winW, 0, 1, 0, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ winW, winH * 0.25, 1, 1, 0, 0, 0, 255},
+
+		{ 0, 0, 0, 0, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ winW, winH * 0.25, 1, 1, 0, 0, 0, 255},		
+		{ 0, winH * 0.25, 0, 1, 0, 0, 0, 255}
+		}, nil, "triangles")
+	love.graphics.draw(mesh)
+end
+
 function gameState:draw()
 	love.graphics.setColor(255, 255, 255, 255)
 	local winW, winH = love.graphics.getCanvas():getDimensions()
@@ -492,17 +568,56 @@ function gameState:draw()
 		love.graphics.pop()
 	end
 
+	-- draw floor
+	self:drawFloor()
+
 	-- draw walls
 	love.graphics.push()
 	love.graphics.translate(winW / 2, winH / 2)
 
-	for y = 0, self.level.height - 1 do
-		for x = 0, self.level.width - 1 do
-			self:drawBlock(x, y)
-		end
+	-- drawing order
+	local yStart = 0
+	local yEnd = self.level.height - 1
+	local yInc = 1
+
+	local xStart = 0
+	local xEnd = self.level.width - 1
+	local xInc = 1
+
+	local drawRow = true
+
+	if self.playerAngular.y > 0 then
+		xStart = xEnd
+		xEnd = 0
+		xInc = -1
 	end
+
+	if self.playerAngular.y < math.pi * -0.5 or self.playerAngular.y > math.pi * 0.5 then
+		yStart = yEnd
+		yEnd = 0
+		yInc = -1
+	end
+
+	-- row of column or column of row?
+	if (self.playerAngular.y > 0.25 * math.pi and self.playerAngular.y < 0.75 * math.pi) or (self.playerAngular.y < -0.25 * math.pi and self.playerAngular.y > -0.75 * math.pi) then
+		drawRow = false
+	end
+	if drawRow then
+		for y = yStart, yEnd, yInc do
+			for x = xStart, xEnd, xInc do
+				self:drawBlock(x, y)
+			end
+		end
+	else -- draw columen
+		for x = xStart, xEnd, xInc do			
+			for y = yStart, yEnd, yInc do
+				self:drawBlock(x, y)
+			end
+		end
+	end		
 	love.graphics.pop()
 
+	love.graphics.print(wallInvVisibility, 0, 0)
 
 	-- draw rotation indicator
 	local indicatorAlpha = 255

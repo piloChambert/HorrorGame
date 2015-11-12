@@ -4,7 +4,7 @@ require "gameState"
 canvasResolution = {w = 320, h = 180}
 screenScale = 3
 fullscreen = false
-azerty = false
+azerty = true
 
 titleState = State()
 function titleState:load()
@@ -124,10 +124,15 @@ end
 local mainCanvas
 states = {}
 
+canvasformats = love.graphics.getCanvasFormats()
 function setupScreen() 
 	love.window.setMode(canvasResolution.w * screenScale, canvasResolution.h * screenScale, {fullscreen=fullscreen})
-	mainCanvas = love.graphics.newCanvas(canvasResolution.w, canvasResolution.h)
-	mainCanvas:setFilter("nearest", "nearest")
+
+	local formats = love.graphics.getCanvasFormats()
+	if formats.normal then
+		mainCanvas = love.graphics.newCanvas(canvasResolution.w, canvasResolution.h)
+		mainCanvas:setFilter("nearest", "nearest")
+	end
 end
 
 function changeState(newState)
@@ -158,7 +163,7 @@ function love.load()
 
 	love.audio.setDistanceModel("exponent")
 
-	changeState(titleState)
+	changeState(gameState)
 end
 
 function love.update(dt)
@@ -166,14 +171,25 @@ function love.update(dt)
 end
 
 function love.draw()
-	love.graphics.setCanvas(mainCanvas)
-	mainCanvas:clear()
+	-- if we have a canvas
+	if mainCanvas ~= nil then
+		love.graphics.setCanvas(mainCanvas)
+		mainCanvas:clear()
 
-    states[#states]:draw()
+    	states[#states]:draw()
 
-	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.setCanvas()
-	love.graphics.draw(mainCanvas, 0, 0, 0, screenScale, screenScale)
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.setCanvas()
+		love.graphics.draw(mainCanvas, 0, 0, 0, screenScale, screenScale)
+	else
+		-- else print an error
+	    local y = 0
+    	for formatname, formatsupported in pairs(canvasformats) do
+        	local str = string.format("Supports format '%s': %s", formatname, tostring(formatsupported))
+        	love.graphics.print(str, 10, y)
+        	y = y + 20
+    	end
+	end
 end
 
 function love.mousemoved(x, y, dx, dy)
