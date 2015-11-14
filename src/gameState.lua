@@ -123,11 +123,11 @@ mouseSensibility = 0.005
 indicatorVisibleTime = 0.1
 indicatorFadeTime = 0.1
 
-wallInvVisibilityIdle = 18
-wallInvVisibilityWalk = 24
-wallInvVisibilityRun = 64
-wallInvVisibilityChangeRateUp = 100 -- per seconds
-wallInvVisibilityChangeRateDown = 130 -- per seconds
+wallInvVisibilityIdle = 22
+wallInvVisibilityWalk = 30
+wallInvVisibilityRun = 48
+wallInvVisibilityChangeRateUp = 32 -- per seconds
+wallInvVisibilityChangeRateDown = 128 -- per seconds
 wallInvVisibility = 12
 
 wallWireframe = false
