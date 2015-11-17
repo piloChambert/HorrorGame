@@ -78,6 +78,11 @@ end
 function State:unload()
 end
 
+-- add an ui element
+function State:addElement(element)
+	table.insert(self.elements, element)
+end
+
 function State:update(dt)
 end
 

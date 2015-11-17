@@ -4,7 +4,7 @@ require "gameState"
 canvasResolution = {w = 320, h = 180}
 screenScale = 3
 fullscreen = false
-azerty = true
+azerty = false
 
 titleState = State()
 function titleState:load()
@@ -40,30 +40,41 @@ function optionState:load()
 	self.backgroundImage = love.graphics.newImage("optionsBackground.png")
 
 	self.fullscreenCheck = UIElement(160, 61, love.graphics.newImage("checkOff.png"), nil, love.graphics.newImage("checkOn.png"), self, self.fullscreenCallback)
-	self.azertyCheck = UIElement(160, 40, love.graphics.newImage("checkOff.png"), nil, love.graphics.newImage("checkOn.png"), self, self.azertyCallback)
-	self.azertyCheck.active = azerty
 
 	self.plusButton = UIElement(238, 82, love.graphics.newImage("plusButtonOff.png"), nil, love.graphics.newImage("plusButtonOn.png"), self, self.resolutionCallback)
 	self.minusButton = UIElement(160, 82, love.graphics.newImage("minusButtonOff.png"), nil, love.graphics.newImage("plusButtonOff.png"), self, self.resolutionCallback)
 
-	table.insert(self.elements, self.fullscreenCheck)
-	table.insert(self.elements, self.azertyCheck)
-	table.insert(self.elements, self.plusButton)
-	table.insert(self.elements, self.minusButton)
+	self.azertyButton = UIElement(160, 38, love.graphics.newImage("azertyOff.png"), nil, love.graphics.newImage("azertyOn.png"), self, self.keyboardCallback)
+	self.azertyButton.active = azerty
+	self.qwertyButton = UIElement(211, 38, love.graphics.newImage("qwertyOff.png"), nil, love.graphics.newImage("qwertyOn.png"), self, self.keyboardCallback)
+	self.qwertyButton.active = not azerty
+
+	self:addElement(self.fullscreenCheck)
+	self:addElement(self.plusButton)
+	self:addElement(self.minusButton)
+	self:addElement(self.azertyButton)
+	self:addElement(self.qwertyButton)	
 end
 
 function optionState:fullscreenCallback(sender)
 	self.fullscreenCheck.active = not self.fullscreenCheck.active
 end
 
-function optionState:azertyCallback(sender)
-	self.azertyCheck.active = not self.azertyCheck.active
-
-	azerty = self.azertyCheck.active
-end
-
 function optionState:resolutionCallback(sender)
 end
+
+function optionState:keyboardCallback(sender)
+	if sender == self.azertyButton then
+		azerty = true
+		self.azertyButton.active = true
+		self.qwertyButton.active = false
+	elseif sender == self.qwertyButton then
+		azerty = false
+		self.azertyButton.active = false
+		self.qwertyButton.active = true	
+	end
+end
+
 
 function optionState:keypressed(key)
 	if key == "escape" then
@@ -122,8 +133,6 @@ end
 
 -- Love callback
 local mainCanvas
-states = {}
-
 canvasformats = love.graphics.getCanvasFormats()
 function setupScreen() 
 	love.window.setMode(canvasResolution.w * screenScale, canvasResolution.h * screenScale, {fullscreen=fullscreen})
@@ -135,6 +144,7 @@ function setupScreen()
 	end
 end
 
+states = {}
 function changeState(newState)
 	if #states > 0 then
 		states[#states]:unload()
