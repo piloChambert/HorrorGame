@@ -71,11 +71,25 @@ function State.new()
 	return self
 end
 
+-- called when the state is first insert in the state stack
 function State:load()
 	self.elements = {}
 end
 
+-- called when the state is removed from the stack
 function State:unload()
+end
+
+-- called when the state reach the top of the stack
+function State:enable()
+	-- reset elements
+	for i, v in ipairs(self.elements) do
+		v.over = false
+	end
+end
+
+-- called when there's another push on top 
+function State:disable()
 end
 
 -- add an ui element

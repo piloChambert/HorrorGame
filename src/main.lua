@@ -87,6 +87,8 @@ function introState:load()
 	State.load(self)
 
 	self.backgroundImage = love.graphics.newImage("intro.png")
+	self.azertylayoutImage = love.graphics.newImage("introAzertyLayout.png")
+	self.qwertylayoutImage = love.graphics.newImage("introQwertyLayout.png")
 end
 
 function introState:mousemoved(x, y, dx, dy)
@@ -99,6 +101,15 @@ function introState:mousepressed(x, y, button)
 	end
 end
 
+function introState:draw() 
+	State.draw(self)
+
+	if azerty then
+		love.graphics.draw(self.azertylayoutImage, 0, 0)
+	else
+		love.graphics.draw(self.qwertylayoutImage, 0, 0)
+	end
+end
 
 gameoverState = State()
 function gameoverState:load()
@@ -147,25 +158,56 @@ end
 states = {}
 function changeState(newState)
 	if #states > 0 then
+		-- disable
+		states[#states]:disable()
+
+		-- unload the state
 		states[#states]:unload()
 	end
 
 	table.remove(states)
 	table.insert(states, newState)
+
+	-- load the new state
 	states[#states]:load()
+
+	-- enable it
+	states[#states]:enable()
 end
 
 function pushState(newState)
+	-- disable top state
+	if #states > 0 then
+		states[#states]:disable()
+	end
+
+	-- insert new state
 	table.insert(states, newState)
+
+	-- load it
 	states[#states]:load()	
+
+	-- enable it
+	states[#states]:enable();
 end
 
 function popState()
 	if #states > 0 then
+		-- disable the state
+		states[#states]:disable()
+
+		-- unload it
 		states[#states]:unload()
+
+		-- remove it from the stack
+		table.remove(states)
 	end
 
-	table.remove(states)	
+
+	if #states > 0 then
+		-- enable top state
+		states[#states]:enable()
+	end
 end
 
 function love.load()
@@ -174,6 +216,11 @@ function love.load()
 	love.audio.setDistanceModel("exponent")
 
 	changeState(gameState)
+
+	-- load the default font
+	local font = love.graphics.newImageFont("font.png"," !\"#$%&`()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghijklmnopqrstuvwxyz{|}")
+    font:setFilter("nearest", "nearest")
+    love.graphics.setFont(font)
 end
 
 function love.update(dt)
@@ -189,6 +236,8 @@ function love.draw()
     	states[#states]:draw()
 
 		love.graphics.setColor(255, 255, 255, 255)
+				love.graphics.print(" !\"#$%&`()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghijklmnopqrstuvwxyz{|}", 0, 0)
+
 		love.graphics.setCanvas()
 		love.graphics.draw(mainCanvas, 0, 0, 0, screenScale, screenScale)
 	else
@@ -200,6 +249,7 @@ function love.draw()
         	y = y + 20
     	end
 	end
+
 end
 
 function love.mousemoved(x, y, dx, dy)
