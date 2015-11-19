@@ -2,7 +2,8 @@ require "State"
 require "gameState"
 
 canvasResolution = {w = 320, h = 180}
-screenScale = 3
+screenScale = 4
+screenResolution = {w = 1280, h = 720}
 fullscreen = false
 azerty = false
 
@@ -40,6 +41,7 @@ function optionState:load()
 	self.backgroundImage = love.graphics.newImage("optionsBackground.png")
 
 	self.fullscreenCheck = UIElement(160, 61, love.graphics.newImage("checkOff.png"), nil, love.graphics.newImage("checkOn.png"), self, self.fullscreenCallback)
+	self.fullscreenCheck.active = fullscreen
 
 	self.plusButton = UIElement(238, 82, love.graphics.newImage("plusButtonOff.png"), nil, love.graphics.newImage("plusButtonOn.png"), self, self.resolutionCallback)
 	self.minusButton = UIElement(160, 82, love.graphics.newImage("minusButtonOff.png"), nil, love.graphics.newImage("plusButtonOff.png"), self, self.resolutionCallback)
@@ -53,14 +55,76 @@ function optionState:load()
 	self:addElement(self.plusButton)
 	self:addElement(self.minusButton)
 	self:addElement(self.azertyButton)
-	self:addElement(self.qwertyButton)	
+	self:addElement(self.qwertyButton)
+
+	self.screenResolutionList = {
+        {640, 480},
+        {800, 600},
+        {1024, 600},
+        {1024, 768},
+        {1152, 864},
+        {1280, 720},
+        {1280, 768},
+        {1280, 800},
+        {1280, 960},
+        {1280, 1024},
+        {1360, 768},
+        {1366, 768},
+        {1440, 900},
+        {1600, 900},
+        {1600, 1200},
+        {1680, 1050},                                                                                                                                                                                                                                      
+        {1920, 1080},                                                                                                                                                                                                                                      
+        {1920, 1200},                                                                                                                                                                                                                                      
+        {2560, 1440}
+	}
 end
 
 function optionState:fullscreenCallback(sender)
-	self.fullscreenCheck.active = not self.fullscreenCheck.active
+	fullscreen = not self.fullscreenCheck.active
+	self.fullscreenCheck.active = fullscreen
+	setupScreen()
 end
 
 function optionState:resolutionCallback(sender)
+	local idx = -1
+
+	for i, v in ipairs(self.screenResolutionList) do 
+		if v[1] == screenResolution.w and v[2] == screenResolution.h then
+			idx = i
+			break
+		end
+	end
+
+	if idx ~= -1 then
+		idx = idx - 1 -- make the index start at 0
+
+		-- compute new index
+		if sender == self.plusButton then
+			idx = (idx + 1) % #self.screenResolutionList
+			print(idx)
+		elseif sender == self.minusButton then
+			idx = (idx - 1 + #self.screenResolutionList) % #self.screenResolutionList
+		end
+
+		-- make the index start at 1
+		idx = idx + 1
+
+		screenResolution.w = self.screenResolutionList[idx][1]
+		screenResolution.h = self.screenResolutionList[idx][2]
+		setupScreen()
+	end
+end
+
+function optionState:draw()
+	State.draw(self)
+
+	-- print resolution
+	local resStr = string.format("%dx%d", screenResolution.w, screenResolution.h)
+	local width = love.graphics.getFont():getWidth(resStr)
+	love.graphics.print(resStr, 171 + (65 - width) * 0.5, 83)
+	love.graphics.print(screenScale .. ": " .. screenScale * canvasResolution.w .. "x" .. screenScale * canvasResolution.h, 171, 93)
+
 end
 
 function optionState:keyboardCallback(sender)
@@ -74,7 +138,6 @@ function optionState:keyboardCallback(sender)
 		self.qwertyButton.active = true	
 	end
 end
-
 
 function optionState:keypressed(key)
 	if key == "escape" then
@@ -144,9 +207,15 @@ end
 
 -- Love callback
 local mainCanvas
+
 canvasformats = love.graphics.getCanvasFormats()
 function setupScreen() 
-	love.window.setMode(canvasResolution.w * screenScale, canvasResolution.h * screenScale, {fullscreen=fullscreen})
+	love.window.setMode(screenResolution.w, screenResolution.h, {fullscreen=fullscreen})
+
+	screenScale = math.ceil(screenResolution.w / 320)
+	canvasResolution.w = screenResolution.w / screenScale
+	canvasResolution.h = screenResolution.h / screenScale
+
 
 	local formats = love.graphics.getCanvasFormats()
 	if formats.normal then
@@ -215,7 +284,7 @@ function love.load()
 
 	love.audio.setDistanceModel("exponent")
 
-	changeState(gameState)
+	changeState(titleState)
 
 	-- load the default font
 	local font = love.graphics.newImageFont("font.png"," !\"#$%&`()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghijklmnopqrstuvwxyz{|}")
@@ -236,7 +305,6 @@ function love.draw()
     	states[#states]:draw()
 
 		love.graphics.setColor(255, 255, 255, 255)
-				love.graphics.print(" !\"#$%&`()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_'abcdefghijklmnopqrstuvwxyz{|}", 0, 0)
 
 		love.graphics.setCanvas()
 		love.graphics.draw(mainCanvas, 0, 0, 0, screenScale, screenScale)

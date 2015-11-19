@@ -123,11 +123,11 @@ mouseSensibility = 0.005
 indicatorVisibleTime = 0.1
 indicatorFadeTime = 0.1
 
-wallInvVisibilityIdle = 22
-wallInvVisibilityWalk = 30
+wallInvVisibilityIdle = 20
+wallInvVisibilityWalk = 24
 wallInvVisibilityRun = 48
 wallInvVisibilityChangeRateUp = 32 -- per seconds
-wallInvVisibilityChangeRateDown = 128 -- per seconds
+wallInvVisibilityChangeRateDown = 64 -- per seconds
 wallInvVisibility = 12
 
 wallWireframe = false
@@ -503,24 +503,28 @@ function gameState.drawFloor()
 
 	local floorIntensity = 64
 
+	local z0 = 255 / wallInvVisibility
+	local yFloor0 = 5 / z0 * winW / 2
+	local yCeil0 = -5 / z0 * winW / 2
+
 	local mesh = love.graphics.newMesh({ 
 		-- floor
-		{ 0, winH * 0.75, 0, 0, 0, 0, 0, 255},
-		{ winW, winH * 0.75, 1, 0, 0, 0, 0, 255},
-		{ winW, winH, 1, 1, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ -winW / 2, yFloor0, 0, 0, 0, 0, 0, 255},
+		{ winW / 2, yFloor0, 1, 0, 0, 0, 0, 255},
+		{ winW / 2, winH / 2, 1, 1, floorIntensity, floorIntensity, floorIntensity, 255},
 
-		{ 0, winH * 0.75, 0, 0, 0, 0, 0, 255},
-		{ winW, winH, 1, 1, floorIntensity, floorIntensity, floorIntensity, 255},		
-		{ 0, winH, 0, 1, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ -winW / 2, yFloor0, 0, 0, 0, 0, 0, 255},
+		{ winW / 2, winH / 2, 1, 1, floorIntensity, floorIntensity, floorIntensity, 255},		
+		{ -winW / 2, winH / 2, 0, 1, floorIntensity, floorIntensity, floorIntensity, 255},
 
 		-- roof
-		{ 0, 0, 0, 0, floorIntensity, floorIntensity, floorIntensity, 255},
-		{ winW, 0, 1, 0, floorIntensity, floorIntensity, floorIntensity, 255},
-		{ winW, winH * 0.25, 1, 1, 0, 0, 0, 255},
+		{ -winW / 2, -winH / 2, 0, 0, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ winW / 2, -winH / 2, 1, 0, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ winW / 2, yCeil0, 1, 1, 0, 0, 0, 255},
 
-		{ 0, 0, 0, 0, floorIntensity, floorIntensity, floorIntensity, 255},
-		{ winW, winH * 0.25, 1, 1, 0, 0, 0, 255},		
-		{ 0, winH * 0.25, 0, 1, 0, 0, 0, 255}
+		{ -winW / 2, -winH / 2, 0, 0, floorIntensity, floorIntensity, floorIntensity, 255},
+		{ winW / 2, yCeil0, 1, 1, 0, 0, 0, 255},		
+		{ -winW / 2, yCeil0, 0, 1, 0, 0, 0, 255}
 		}, nil, "triangles")
 	love.graphics.draw(mesh)
 end
@@ -564,16 +568,15 @@ function gameState:draw()
 
 		love.graphics.pop()
 
-
 		love.graphics.pop()
 	end
-
-	-- draw floor
-	self:drawFloor()
 
 	-- draw walls
 	love.graphics.push()
 	love.graphics.translate(winW / 2, winH / 2)
+
+	-- draw floor
+	self:drawFloor()
 
 	-- drawing order
 	local yStart = 0
