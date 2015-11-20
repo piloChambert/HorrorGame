@@ -126,8 +126,8 @@ indicatorFadeTime = 0.1
 wallInvVisibilityIdle = 20
 wallInvVisibilityWalk = 24
 wallInvVisibilityRun = 48
-wallInvVisibilityChangeRateUp = 32 -- per seconds
-wallInvVisibilityChangeRateDown = 64 -- per seconds
+wallInvVisibilityChangeRateUp = 16 -- per seconds
+wallInvVisibilityChangeRateDown = 16 -- per seconds
 wallInvVisibility = 12
 
 wallWireframe = false
