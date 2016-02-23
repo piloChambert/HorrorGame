@@ -19,8 +19,8 @@ function titleState:load()
 	self.startButton = UIElement(213, 135, love.graphics.newImage("startOff.png"), love.graphics.newImage("startOn.png"), nil, self, self.startCallback)
 	self.optionsButton = UIElement(48, 135, love.graphics.newImage("optionButtonOff.png"), love.graphics.newImage("optionButtonOn.png"), nil, self, self.optionsCallback)
 
-	table.insert(self.elements, self.startButton)
-	table.insert(self.elements, self.optionsButton)
+	self:addElement(self.startButton)
+	self:addElement(self.optionsButton)
 end
 
 function titleState:startCallback(sender)
