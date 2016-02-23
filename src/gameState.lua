@@ -629,5 +629,5 @@ function gameState:draw()
 	end
 
 	love.graphics.setColor(255, 255, 255, indicatorAlpha)
-	love.graphics.draw(self.indicator, 96 / screenScale, winH - 96 / screenScale, self.indicatorRotation, 1 / screenScale , 1 / screenScale, 64, 64)
+	love.graphics.draw(self.indicator, 24, winH - 24, self.indicatorRotation, 0.2 , 0.2, 64, 64)
 end

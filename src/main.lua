@@ -1,9 +1,12 @@
 require "State"
 require "gameState"
 
-canvasResolution = {w = 320, h = 180}
-screenScale = 4
-screenResolution = {w = 1280, h = 720}
+-- screen configuration
+canvasResolution = {width = 320, height = 180}
+canvasScale = 1
+windowedScreenScale = 4
+canvasOffset = {x = 0, y = 0}
+
 fullscreen = false
 azerty = false
 
@@ -56,28 +59,6 @@ function optionState:load()
 	self:addElement(self.minusButton)
 	self:addElement(self.azertyButton)
 	self:addElement(self.qwertyButton)
-
-	self.screenResolutionList = {
-        {640, 480},
-        {800, 600},
-        {1024, 600},
-        {1024, 768},
-        {1152, 864},
-        {1280, 720},
-        {1280, 768},
-        {1280, 800},
-        {1280, 960},
-        {1280, 1024},
-        {1360, 768},
-        {1366, 768},
-        {1440, 900},
-        {1600, 900},
-        {1600, 1200},
-        {1680, 1050},                                                                                                                                                                                                                                      
-        {1920, 1080},                                                                                                                                                                                                                                      
-        {1920, 1200},                                                                                                                                                                                                                                      
-        {2560, 1440}
-	}
 end
 
 function optionState:fullscreenCallback(sender)
@@ -87,43 +68,22 @@ function optionState:fullscreenCallback(sender)
 end
 
 function optionState:resolutionCallback(sender)
-	local idx = -1
-
-	for i, v in ipairs(self.screenResolutionList) do 
-		if v[1] == screenResolution.w and v[2] == screenResolution.h then
-			idx = i
-			break
-		end
+	if sender == self.plusButton then
+		windowedScreenScale = math.min(windowedScreenScale + 1, 6)
+	elseif sender == self.minusButton then
+		windowedScreenScale = math.max(windowedScreenScale - 1, 1)
 	end
 
-	if idx ~= -1 then
-		idx = idx - 1 -- make the index start at 0
-
-		-- compute new index
-		if sender == self.plusButton then
-			idx = (idx + 1) % #self.screenResolutionList
-			print(idx)
-		elseif sender == self.minusButton then
-			idx = (idx - 1 + #self.screenResolutionList) % #self.screenResolutionList
-		end
-
-		-- make the index start at 1
-		idx = idx + 1
-
-		screenResolution.w = self.screenResolutionList[idx][1]
-		screenResolution.h = self.screenResolutionList[idx][2]
-		setupScreen()
-	end
+	setupScreen()
 end
 
 function optionState:draw()
 	State.draw(self)
 
 	-- print resolution
-	local resStr = string.format("%dx%d", screenResolution.w, screenResolution.h)
-	local width = love.graphics.getFont():getWidth(resStr)
-	love.graphics.print(resStr, 171 + (65 - width) * 0.5, 83)
-	love.graphics.print(screenScale .. ": " .. screenScale * canvasResolution.w .. "x" .. screenScale * canvasResolution.h, 171, 93)
+	local scaleStr = string.format("%d", windowedScreenScale)
+	local width = love.graphics.getFont():getWidth(scaleStr)
+	love.graphics.print(scaleStr, 171 + (65 - width) * 0.5, 83)
 
 end
 
@@ -207,19 +167,28 @@ end
 
 -- Love callback
 local mainCanvas
+function setupScreen()
+	canvasScale = windowedScreenScale 
 
-canvasformats = love.graphics.getCanvasFormats()
-function setupScreen() 
-	love.window.setMode(screenResolution.w, screenResolution.h, {fullscreen=fullscreen})
+	if fullscreen then
+		local dw, dh = love.window.getDesktopDimensions()
+		--print(dw, dh)
 
-	screenScale = math.ceil(screenResolution.w / 320)
-	canvasResolution.w = screenResolution.w / screenScale
-	canvasResolution.h = screenResolution.h / screenScale
+		canvasScale = math.floor(math.min(dw / canvasResolution.width, dh / canvasResolution.height))
+		canvasOffset.x = (dw - (canvasResolution.width * canvasScale)) * 0.5
+		canvasOffset.y = (dh - (canvasResolution.height * canvasScale)) * 0.5
+	else
+		canvasOffset.x = 0
+		canvasOffset.y = 0
+	end
 
+	local windowW = canvasResolution.width * canvasScale
+	local windowH = canvasResolution.height * canvasScale
+	love.window.setMode(windowW, windowH, {fullscreen=fullscreen})
 
 	local formats = love.graphics.getCanvasFormats()
 	if formats.normal then
-		mainCanvas = love.graphics.newCanvas(canvasResolution.w, canvasResolution.h)
+		mainCanvas = love.graphics.newCanvas(canvasResolution.width, canvasResolution.height)
 		mainCanvas:setFilter("nearest", "nearest")
 	end
 end
@@ -307,7 +276,7 @@ function love.draw()
 		love.graphics.setColor(255, 255, 255, 255)
 
 		love.graphics.setCanvas()
-		love.graphics.draw(mainCanvas, 0, 0, 0, screenScale, screenScale)
+		love.graphics.draw(mainCanvas, canvasOffset.x, canvasOffset.y, 0, canvasScale, canvasScale)
 	else
 		-- else print an error
 	    local y = 0
@@ -321,11 +290,11 @@ function love.draw()
 end
 
 function love.mousemoved(x, y, dx, dy)
-	states[#states]:mousemoved(x / screenScale, y / screenScale, dx, dy)
+	states[#states]:mousemoved((x - canvasOffset.x) / canvasScale, (y - canvasOffset.y) / canvasScale, dx, dy)
 end
 
 function love.mousepressed( x, y, button )
-	states[#states]:mousepressed(x / screenScale, y / screenScale, button)
+	states[#states]:mousepressed((x - canvasOffset.x) / canvasScale, (y - canvasOffset.y) / canvasScale, button)
 end
 
 function love.keypressed(key)
