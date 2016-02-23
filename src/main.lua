@@ -6,7 +6,6 @@ canvasResolution = {width = 320, height = 180}
 canvasScale = 1
 windowedScreenScale = 4
 canvasOffset = {x = 0, y = 0}
-
 fullscreen = false
 azerty = false
 
