@@ -1,13 +1,17 @@
 require "State"
 require "gameState"
+serialize = require "ser"
 
 -- screen configuration
 canvasResolution = {width = 320, height = 180}
 canvasScale = 1
-windowedScreenScale = 4
 canvasOffset = {x = 0, y = 0}
-fullscreen = false
-azerty = false
+
+configuration = {
+	windowedScreenScale = 3,
+	fullscreen = false,
+	azerty = false
+}
 
 titleState = State()
 function titleState:load()
@@ -43,15 +47,15 @@ function optionState:load()
 	self.backgroundImage = love.graphics.newImage("optionsBackground.png")
 
 	self.fullscreenCheck = UIElement(160, 61, love.graphics.newImage("checkOff.png"), nil, love.graphics.newImage("checkOn.png"), self, self.fullscreenCallback)
-	self.fullscreenCheck.active = fullscreen
+	self.fullscreenCheck.active = configuration.fullscreen
 
 	self.plusButton = UIElement(238, 82, love.graphics.newImage("plusButtonOff.png"), nil, love.graphics.newImage("plusButtonOn.png"), self, self.resolutionCallback)
 	self.minusButton = UIElement(160, 82, love.graphics.newImage("minusButtonOff.png"), nil, love.graphics.newImage("plusButtonOff.png"), self, self.resolutionCallback)
 
 	self.azertyButton = UIElement(160, 38, love.graphics.newImage("azertyOff.png"), nil, love.graphics.newImage("azertyOn.png"), self, self.keyboardCallback)
-	self.azertyButton.active = azerty
+	self.azertyButton.active = configuration.azerty
 	self.qwertyButton = UIElement(211, 38, love.graphics.newImage("qwertyOff.png"), nil, love.graphics.newImage("qwertyOn.png"), self, self.keyboardCallback)
-	self.qwertyButton.active = not azerty
+	self.qwertyButton.active = not configuration.azerty
 
 	self:addElement(self.fullscreenCheck)
 	self:addElement(self.plusButton)
@@ -61,26 +65,29 @@ function optionState:load()
 end
 
 function optionState:fullscreenCallback(sender)
-	fullscreen = not self.fullscreenCheck.active
-	self.fullscreenCheck.active = fullscreen
+	configuration.fullscreen = not self.fullscreenCheck.active
+	self.fullscreenCheck.active = configuration.fullscreen
 	setupScreen()
+
+	saveSettings()
 end
 
 function optionState:resolutionCallback(sender)
 	if sender == self.plusButton then
-		windowedScreenScale = math.min(windowedScreenScale + 1, 6)
+		configuration.windowedScreenScale = math.min(configuration.windowedScreenScale + 1, 6)
 	elseif sender == self.minusButton then
-		windowedScreenScale = math.max(windowedScreenScale - 1, 1)
+		configuration.windowedScreenScale = math.max(configuration.windowedScreenScale - 1, 1)
 	end
 
 	setupScreen()
+	saveSettings()
 end
 
 function optionState:draw()
 	State.draw(self)
 
 	-- print resolution
-	local scaleStr = string.format("%d", windowedScreenScale)
+	local scaleStr = string.format("%d", configuration.windowedScreenScale)
 	local width = love.graphics.getFont():getWidth(scaleStr)
 	love.graphics.print(scaleStr, 171 + (65 - width) * 0.5, 83)
 
@@ -88,11 +95,11 @@ end
 
 function optionState:keyboardCallback(sender)
 	if sender == self.azertyButton then
-		azerty = true
+		configuration.azerty = true
 		self.azertyButton.active = true
 		self.qwertyButton.active = false
 	elseif sender == self.qwertyButton then
-		azerty = false
+		configuration.azerty = false
 		self.azertyButton.active = false
 		self.qwertyButton.active = true	
 	end
@@ -163,13 +170,31 @@ function endState:mousepressed(x, y, button)
 	end
 end
 
+function saveSettings()
+	print(serialize(configuration))
+	love.filesystem.write("settings.lua", serialize(configuration))
+end
+
+function loadSettings() 
+	if love.filesystem.exists("settings.lua") then
+		local confChunk = love.filesystem.load("settings.lua")
+
+		local ok, result = pcall(confChunk)
+
+		if not ok then 
+			print("Error while running settings file : " .. tostring(result))
+		else
+			configuration = result
+		end
+	end
+end
 
 -- Love callback
 local mainCanvas
 function setupScreen()
-	canvasScale = windowedScreenScale 
+	canvasScale = configuration.windowedScreenScale 
 
-	if fullscreen then
+	if configuration.fullscreen then
 		local dw, dh = love.window.getDesktopDimensions()
 		--print(dw, dh)
 
@@ -183,7 +208,7 @@ function setupScreen()
 
 	local windowW = canvasResolution.width * canvasScale
 	local windowH = canvasResolution.height * canvasScale
-	love.window.setMode(windowW, windowH, {fullscreen=fullscreen})
+	love.window.setMode(windowW, windowH, {fullscreen = configuration.fullscreen})
 
 	local formats = love.graphics.getCanvasFormats()
 	if formats.normal then
@@ -248,6 +273,7 @@ function popState()
 end
 
 function love.load()
+	loadSettings()
 	setupScreen()
 
 	love.audio.setDistanceModel("exponent")

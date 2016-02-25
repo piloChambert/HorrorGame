@@ -238,7 +238,7 @@ function gameState:update(dt)
 	local backKey = "s"
 	local leftKey = "a"
 	local rightKey = "d"
-	if azerty then 
+	if configuration.azerty then 
 		fwdKey = "z" 
 		leftKey = "q"
 	end
