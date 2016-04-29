@@ -32,6 +32,8 @@ function UIElement.new(x, y, image, overImage, activeImage, target, callback)
 
 	self.currentImage = self.image
 
+	self.state = nil
+
 	return self
 end
 
@@ -58,6 +60,12 @@ function UIElement:mousepressed(x, y, button)
 		if self.target ~= nil and self.callback ~= nil then
 			self.callback(self.target, self)
 		end
+	end
+end
+
+function UIElement:removeFromState()
+	if self.state ~= nil then
+		self.state:removeElement(self)
 	end
 end
 
@@ -95,6 +103,25 @@ end
 -- add an ui element
 function State:addElement(element)
 	table.insert(self.elements, element)
+	element.state = self
+end
+
+function State:removeElement(element)
+	-- look for element index in element list
+	local idx = -1
+	for k, v in ipairs(self.elements) do
+		if v == element then 
+			idx = k
+			break
+		end
+	end
+
+	print(idx)
+	-- if we got a valid index, remove it
+	if idx ~= -1 then
+		table.remove(self.elements, idx)
+		element.state = nil
+	end
 end
 
 function State:update(dt)

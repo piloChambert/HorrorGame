@@ -58,18 +58,29 @@ function optionState:load()
 	self.qwertyButton.active = not configuration.azerty
 
 	self:addElement(self.fullscreenCheck)
-	self:addElement(self.plusButton)
-	self:addElement(self.minusButton)
 	self:addElement(self.azertyButton)
 	self:addElement(self.qwertyButton)
+
+	if not configuration.fullscreen then
+		self:addElement(self.plusButton)
+		self:addElement(self.minusButton)
+	end
+
 end
 
 function optionState:fullscreenCallback(sender)
 	configuration.fullscreen = not self.fullscreenCheck.active
 	self.fullscreenCheck.active = configuration.fullscreen
 	setupScreen()
-
 	saveSettings()
+
+	if not configuration.fullscreen then
+		self:addElement(self.plusButton)
+		self:addElement(self.minusButton)
+	else
+		self.plusButton:removeFromState()
+		self.minusButton:removeFromState()
+	end
 end
 
 function optionState:resolutionCallback(sender)
@@ -86,10 +97,12 @@ end
 function optionState:draw()
 	State.draw(self)
 
-	-- print resolution
-	local scaleStr = string.format("%d", configuration.windowedScreenScale)
-	local width = love.graphics.getFont():getWidth(scaleStr)
-	love.graphics.print(scaleStr, 171 + (65 - width) * 0.5, 83)
+	-- print resolution scale
+	if not configuration.fullscreen then
+		local scaleStr = string.format("%d", configuration.windowedScreenScale)
+		local width = love.graphics.getFont():getWidth(scaleStr)
+		love.graphics.print(scaleStr, 171 + (65 - width) * 0.5, 83)
+	end
 
 end
 
