@@ -56,7 +56,6 @@ function UIElement:mousemoved(x, y, dx, dy)
 end
 
 function UIElement:mousepressed(x, y, button)
-	if testPointInQuad(x, y, self.x, self.y, self.width, self.height) and button == "l" then
 		if self.target ~= nil and self.callback ~= nil then
 			self.callback(self.target, self)
 		end

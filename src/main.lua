@@ -104,6 +104,7 @@ function optionState:draw()
 		love.graphics.print(scaleStr, 171 + (65 - width) * 0.5, 83)
 	end
 
+	love.graphics.print("1 2 3 4 5 6 7 8 9 0", 0, 0)
 end
 
 function optionState:keyboardCallback(sender)
@@ -138,7 +139,7 @@ function introState:mousemoved(x, y, dx, dy)
 end
 
 function introState:mousepressed(x, y, button)
-	if button == "l" then
+	if button == "l" or button == 1 then
 		changeState(gameState)
 	end
 end
@@ -307,7 +308,8 @@ function love.draw()
 	-- if we have a canvas
 	if mainCanvas ~= nil then
 		love.graphics.setCanvas(mainCanvas)
-		mainCanvas:clear()
+		love.graphics.clear()
+		--mainCanvas:clear()
 
     	states[#states]:draw()
 
@@ -331,7 +333,7 @@ function love.mousemoved(x, y, dx, dy)
 	states[#states]:mousemoved((x - canvasOffset.x) / canvasScale, (y - canvasOffset.y) / canvasScale, dx, dy)
 end
 
-function love.mousepressed( x, y, button )
+function love.mousepressed(x, y, button)
 	states[#states]:mousepressed((x - canvasOffset.x) / canvasScale, (y - canvasOffset.y) / canvasScale, button)
 end
 
