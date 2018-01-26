@@ -26,10 +26,10 @@ function Monster.new()
 	local self = setmetatable({}, Monster)
 
 	self.timer = 0
-	self.sound = love.audio.newSource("monster.mp3", "static")
+	self.sound = love.audio.newSource("monster.wav", "static")
 	self.sound:setAttenuationDistances(3, 0)
 
-	self.attackSound = love.audio.newSource("attack.mp3", "static")
+	self.attackSound = love.audio.newSource("attack.wav", "static")
 	self.attackSound:setAttenuationDistances(3, 0)
 
 
@@ -525,7 +525,7 @@ function gameState.drawFloor()
 		{ -winW / 2, -winH / 2, 0, 0, floorIntensity, floorIntensity, floorIntensity, 255},
 		{ winW / 2, yCeil0, 1, 1, 0, 0, 0, 255},		
 		{ -winW / 2, yCeil0, 0, 1, 0, 0, 0, 255}
-		}, nil, "triangles")
+		}, "triangles")
 	love.graphics.draw(mesh)
 end
 
