@@ -57,9 +57,12 @@ function optionState:load()
 	self.qwertyButton = UIElement(211, 38, love.graphics.newImage("qwertyOff.png"), nil, love.graphics.newImage("qwertyOn.png"), self, self.keyboardCallback)
 	self.qwertyButton.active = not configuration.azerty
 
+	self.exitButton = UIElement(40, 140, love.graphics.newImage("backButtonOff.png"), love.graphics.newImage("backButtonOn.png"), nil, self, self.exitCallback)
+
 	self:addElement(self.fullscreenCheck)
 	self:addElement(self.azertyButton)
 	self:addElement(self.qwertyButton)
+	self:addElement(self.exitButton)
 
 	if not configuration.fullscreen then
 		self:addElement(self.plusButton)
@@ -104,7 +107,7 @@ function optionState:draw()
 		love.graphics.print(scaleStr, 171 + (65 - width) * 0.5, 83)
 	end
 
-	love.graphics.print("1 2 3 4 5 6 7 8 9 0", 0, 0)
+	--love.graphics.print("1 2 3 4 5 6 7 8 9 0", 0, 0)
 end
 
 function optionState:keyboardCallback(sender)
@@ -123,6 +126,10 @@ function optionState:keypressed(key)
 	if key == "escape" then
 		popState()
 	end
+end
+
+function optionState:exitCallback(key)
+	popState()
 end
 
 introState = State()
